@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VN Infra - Hybrid AI System</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        /* --- STYLES --- */
+        :root { --primary: #2563eb; --accent: #f97316; --bg: #f8fafc; --surface: #ffffff; --text: #0f172a; --border: #e2e8f0; --success: #10b981; --danger: #ef4444; }
+        body.dark { --bg: #0f172a; --surface: #1e293b; --text: #f8fafc; --border: #334155; --primary: #3b82f6; }
+        * { box-sizing: border-box; transition: background 0.3s, color 0.3s; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        .navbar { background: var(--surface); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 50; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; color: var(--primary); cursor: pointer; font-size: 1.2rem; }
+        .brand img { height: 32px; border-radius: 50%; object-fit: cover; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; width: 100%; flex: 1; }
+        .center-box { max-width: 450px; margin: 3rem auto; text-align: center; }
+        .card { background: var(--surface); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border); margin-bottom: 1.5rem; }
+        .card-top { border-top: 4px solid var(--primary); }
+        .btn { background: var(--primary); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; width: 100%; margin-bottom: 0.5rem; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-danger { background: var(--danger); }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.9rem; width: auto; }
+        input, select, textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; margin: 0.5rem 0 1rem; background: var(--bg); color: var(--text); }
+        .grid { display: grid; grid-template-columns: 250px 1fr; gap: 2rem; }
+        .stat-card { text-align: center; padding: 1rem; background: var(--bg); border-radius: 8px; }
+        .stat-val { font-size: 2rem; font-weight: bold; color: var(--primary); }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+        .kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+        .kanban-col { background: var(--bg); padding: 1rem; border-radius: 8px; min-height: 200px; }
+        .kanban-card { background: var(--surface); padding: 1rem; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 0.5rem; cursor: pointer; border-left: 4px solid var(--primary); }
+        .kanban-header { font-weight: bold; margin-bottom: 1rem; display: flex; justify-content: space-between; }
+        
+        /* MODAL FIXES */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 2000; }
+        .modal.open { display: flex !important; opacity: 1 !important; visibility: visible !important; }
+        .modal-box { background: var(--surface); padding: 2rem; border-radius: 12px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; position: relative; z-index: 2001; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .close-modal { position: absolute; top: 1rem; right: 1rem; cursor: pointer; font-size: 1.5rem; color: #64748b; }
+        
+        .hidden { display: none !important; }
+        .text-sm { font-size: 0.875rem; color: #64748b; }
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.85rem; font-weight: 600; }
+        .st-Shortlisted { background: #d1fae5; color: #065f46; }
+        .st-Rejected { background: #fee2e2; color: #991b1b; }
+        .st-Pending { background: #fef3c7; color: #92400e; }
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Chatbot */
+        .chat-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--primary); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 60; font-size: 1.5rem; }
+        .chat-window { position: fixed; bottom: 90px; right: 20px; width: 350px; height: 500px; background: var(--surface); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid var(--border); display: none; flex-direction: column; z-index: 60; }
+        .chat-body { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; }
+        .msg { padding: 0.5rem 1rem; border-radius: 20px; max-width: 80%; font-size: 0.9rem; }
+        .msg.user { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .msg.bot { background: var(--bg); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .mic-active { background: #ef4444 !important; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        
+        /* Drag and Drop */
+        .kanban-card.dragging { opacity: 0.5; border: 2px dashed var(--primary); }
+        .kanban-col.drag-over { background: #e2e8f0; }
+
+        @media(max-width: 768px) { .grid, .kanban-board { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="brand" onclick="app.nav('home')">
+            <img src="vn.jpg" onerror="this.src='https://ui-avatars.com/api/?name=VN&background=2563eb&color=fff'" alt="Logo">
+            <span>VN Infra Hybrid</span>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <span class="settings-icon" onclick="document.getElementById('modal-settings').classList.add('open')" title="Settings" style="cursor:pointer; margin-right:1rem;">⚙️</span>
+            <span class="settings-icon" onclick="app.toggleDarkMode()" title="Toggle Dark Mode" style="cursor:pointer; margin-right:1rem;">🌓</span>
+            <div id="user-badge" style="font-size:0.8rem; background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius:4px; margin-left: 1rem;">Guest</div>
+        </div>
+    </nav>
+
+    <div id="loading-overlay" class="loading-overlay"><div class="spinner"></div><h3 style="margin-top: 1rem; color: var(--primary);">Processing...</h3></div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="modal-settings" class="modal">
+        <div class="modal-box">
+            <span class="close-modal" onclick="this.closest('.modal').classList.remove('open')">&times;</span>
+            <h2>⚙️ Settings</h2>
+            <label>AI Provider</label>
+            <select id="ai-provider" style="margin-bottom: 1rem;"><option value="groq">Groq</option><option value="gemini">Gemini</option></select>
+            <label>API Key</label>
+            <input type="text" id="custom-api-key" placeholder="API Key..." style="font-family: monospace;">
+            <button onclick="ai.saveSettings()" class="btn">Save</button>
+            <hr style="margin: 1rem 0;">
+            <button onclick="dashboard.exportData()" class="btn btn-outline">💾 Backup Data (JSON)</button>
+            <label style="margin-top:1rem; display:block;">Import Backup</label>
+            <input type="file" onchange="dashboard.importData(this)">
+            <div id="key-status" style="margin-top: 1rem; font-weight: bold; color: green;"></div>
+        </div>
+    </div>
+
+    <!-- ABOUT & TEAM MODAL -->
+    <div id="modal-info" class="modal">
+        <div class="modal-box">
+            <span class="close-modal" onclick="this.closest('.modal').classList.remove('open')">&times;</span>
+            <h2>VN Infra Reality</h2>
+            <p class="text-sm">Hybrid AI Recruitment System v2.0</p>
+            <hr style="margin: 1rem 0; border: 0; border-top: 1px solid var(--border);">
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 0.5rem;">About Project</h3>
+                <p>A Next-Gen Applicant Tracking System powered by Hybrid AI. We combine local BERT models for privacy-first scoring with Cloud LLMs for generative tasks.</p>
+            </div>
+            <div>
+                <h3 style="color: var(--accent); border-bottom: 2px solid var(--border); padding-bottom: 0.5rem;">The Team</h3>
+                <ul style="padding-left: 1.2rem; margin: 0;">
+                    <li><strong>Devesh Reddy</strong> - SWD (pure23ainds@cmrit.ac.in)</li>
+                    <li><strong>Nihal DR</strong> - Support (nidr23ainds@cmrit.ac.in)</li>
+                    <li><strong>Tanusree Reddy</strong> - HR (mre23ainds@cmrit.ac.in)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- HOME VIEW -->
+    <section id="view-home" class="container center-box">
+        <div class="card card-top">
+            <h1 style="color: var(--primary);">Welcome Portal</h1>
+            <p style="margin-bottom: 2rem; color: #64748b;">Hybrid ML Recruitment System</p>
+            <button onclick="app.nav('login-recruiter')" class="btn btn-outline">Recruiter Login</button>
+            <button onclick="app.nav('login-candidate')" class="btn btn-outline" style="background:#f0fdf4; border-color:#10b981; color:#047857;">Candidate Login</button>
+            <button onclick="app.nav('candidate')" class="btn">Resume Check (Guest)</button>
+            <button onclick="document.getElementById('modal-info').classList.add('open')" class="btn btn-sm" style="margin-top: 1rem; background: #64748b;">ℹ️ About & Team</button>
+        </div>
+    </section>
+
+    <!-- RECRUITER LOGIN -->
+    <section id="view-login-recruiter" class="container center-box hidden">
+        <div class="card card-top">
+            <h2>Recruiter Access</h2>
+            <form onsubmit="auth.loginRecruiter(event)">
+                <input type="password" id="login-pass-rec" placeholder="Code..." required>
+                <button class="btn">Login</button>
+            </form>
+            <button onclick="app.nav('home')" class="btn btn-outline" style="margin-top: 1rem;">Cancel</button>
+        </div>
+    </section>
+
+    <!-- CANDIDATE LOGIN -->
+    <section id="view-login-candidate" class="container center-box hidden">
+        <div class="card card-top" style="border-top-color: var(--success);">
+            <h2>Candidate Portal</h2>
+            <p class="text-sm">Login to track your applications</p>
+            <form onsubmit="auth.loginCandidate(event)">
+                <input type="email" id="cand-email" placeholder="Enter your email..." required>
+                <button class="btn" style="background: var(--success);">Access Dashboard</button>
+            </form>
+            <button onclick="app.nav('home')" class="btn btn-outline" style="margin-top: 1rem;">Cancel</button>
+        </div>
+    </section>
+
+    <!-- RECRUITER DASHBOARD -->
+    <section id="view-dashboard" class="container hidden">
+        <div class="grid">
+            <aside>
+                <div class="card">
+                    <h3>Menu</h3>
+                    <button class="btn btn-outline" onclick="dashboard.load()">↻ Refresh</button>
+                    <button class="btn btn-outline" onclick="dashboard.toggleViewMode()">📊 Toggle View</button>
+                    <button class="btn btn-outline" onclick="dashboard.toggleAnalytics()">📈 Analytics</button>
+                    <button class="btn btn-outline" onclick="dashboard.loadInterviews()">📅 Interviews</button>
+                    <button class="btn btn-outline" onclick="dashboard.exportCSV()">📥 Export CSV</button>
+                    <button class="btn btn-outline" onclick="dashboard.openManageJobs()">💼 Jobs</button>
+                    <button class="btn btn-danger" onclick="app.nav('home')">Logout</button>
+                </div>
+            </aside>
+            <main>
+                <div class="card" style="display: flex; gap: 1rem; justify-content: space-around;">
+                    <div class="stat-card"><div class="text-sm">Total</div><div class="stat-val" id="stat-total">0</div></div>
+                    <div class="stat-card"><div class="text-sm">Shortlisted</div><div class="stat-val" id="stat-short">0</div></div>
+                    <div class="stat-card"><div class="text-sm">Avg Score</div><div class="stat-val" id="stat-avg">0%</div></div>
+                </div>
+                <div id="analytics-container" class="card hidden">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <h4>Application Status</h4>
+                            <canvas id="analyticsChart"></canvas>
+                        </div>
+                        <div>
+                            <h4>Skill Gaps (Top Missing)</h4>
+                            <canvas id="skillGapChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div id="view-interviews" class="card hidden">
+                    <h3>📅 Upcoming Interviews</h3>
+                    <div id="interview-list" style="margin-top: 1rem;"></div>
+                </div>
+                <div id="view-apps" class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <h3>Applications</h3>
+                        <input type="text" id="search-input" placeholder="Search..." onkeyup="dashboard.load()" style="width: 200px; margin:0;">
+                    </div>
+                    <div id="view-table"><div style="overflow-x: auto;"><table><thead><tr><th>Name</th><th>Role</th><th>Score</th><th>Status</th><th>Actions</th></tr></thead><tbody id="table-body"></tbody></table></div></div>
+                    <!-- KANBAN BOARD (DRAGGABLE) -->
+                    <div id="view-board" class="kanban-board hidden">
+                        <div id="board-pending" class="kanban-col" style="border-top: 3px solid #f59e0b;" ondrop="dashboard.drop(event, 'Pending')" ondragover="dashboard.allowDrop(event)"></div>
+                        <div id="board-shortlisted" class="kanban-col" style="border-top: 3px solid #10b981;" ondrop="dashboard.drop(event, 'Shortlisted')" ondragover="dashboard.allowDrop(event)"></div>
+                        <div id="board-rejected" class="kanban-col" style="border-top: 3px solid #ef4444;" ondrop="dashboard.drop(event, 'Rejected')" ondragover="dashboard.allowDrop(event)"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Post Job</h3>
+                    <form onsubmit="dashboard.addJob(event)">
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input id="job-title" placeholder="Job Title" required style="flex: 1;">
+                            <button type="button" onclick="dashboard.generateJD()" class="btn" style="width: auto; margin-bottom: 1rem; background: var(--accent);">✨ AI Write</button>
+                        </div>
+                        <textarea id="job-desc" placeholder="Description" rows="4" required></textarea>
+                        <button class="btn">Post Job</button>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </section>
+
+    <!-- CANDIDATE DASHBOARD (UPDATED) -->
+    <section id="view-dashboard-candidate" class="container hidden">
+        <div class="card card-top" style="border-top-color: var(--success);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>My Applications</h2>
+                <button class="btn btn-danger btn-sm" onclick="app.nav('home')">Logout</button>
+            </div>
+            <p id="cand-welcome" class="text-sm" style="margin-bottom: 1rem;">Welcome!</p>
+            
+            <div style="display:flex; gap:10px; margin-bottom: 1rem;">
+                <button onclick="app.nav('apply')" class="btn btn-success" style="flex:1;">+ Apply for New Job</button>
+                <button onclick="app.nav('candidate')" class="btn btn-outline" style="flex:1;">🔍 Check Resume Score</button>
+            </div>
+            
+            <table>
+                <thead><tr><th>Role</th><th>Date</th><th>Score</th><th>Status</th><th>Notes</th></tr></thead>
+                <tbody id="cand-app-list"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- GUEST RESUME CHECK (Also used by Candidates) -->
+    <section id="view-candidate" class="container hidden">
+        <div class="card">
+            <!-- UPDATED BACK BUTTON -->
+            <button onclick="auth.backToDashboard()" class="btn btn-sm btn-outline" style="margin-bottom: 1rem;">← Back</button>
+            <h2>ML Resume Match</h2>
+            <form onsubmit="ai.checkResume(event)">
+                <label>Upload Resume (PDF)</label>
+                <input type="file" id="chk-file" accept="application/pdf" required>
+                <label>Job Description</label>
+                <textarea id="chk-jd" rows="5" placeholder="Paste JD..." required></textarea>
+                <button id="chk-btn" class="btn">Run Analysis</button>
+            </form>
+            <div id="chk-result" class="card" style="margin-top: 1rem; background: #eff6ff; display: none;"></div>
+        </div>
+    </section>
+
+    <!-- APPLY VIEW -->
+    <section id="view-apply" class="container hidden">
+        <div class="card">
+            <button onclick="auth.backFromApply()" class="btn btn-sm btn-outline" style="margin-bottom: 1rem;">← Back</button>
+            <h2>Submit Application</h2>
+            <form onsubmit="apply.submit(event)">
+                <label>Full Name</label>
+                <input id="app-name" required>
+                <label>Email</label>
+                <input id="app-email" type="email" required>
+                <label>Select Position</label>
+                <select id="app-job" required><option disabled selected>Loading...</option></select>
+                <label>Upload Resume (PDF)</label>
+                <input type="file" id="app-file" accept="application/pdf" required>
+                <button id="app-btn" class="btn btn-success">Submit Application</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- MODAL DETAIL (RECRUITER) -->
+    <div id="modal-detail" class="modal">
+        <div class="modal-box">
+            <span class="close-modal" onclick="this.closest('.modal').classList.remove('open')">&times;</span>
+            <h2 id="m-name" style="margin-top: 0;">Candidate Name</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div><h4 style="color: var(--success);">Matched</h4><ul id="m-match" style="padding-left: 1rem;"></ul></div>
+                <div><h4 style="color: var(--danger);">Missing</h4><ul id="m-miss" style="padding-left: 1rem;"></ul></div>
+            </div>
+            
+            <div style="margin-top: 1rem; padding: 1rem; background: #f3e8ff; border-radius: 8px;">
+                <h4 style="margin-top:0; color: #6b21a8;">🎤 Interview Prep & Scheduling</h4>
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.85rem; font-weight: bold;">Schedule Interview:</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="datetime-local" id="m-interview-date" style="margin:0; flex: 1;">
+                        <button onclick="dashboard.scheduleInterview()" class="btn btn-sm" style="background: #7c3aed;">📅 Save</button>
+                        <button onclick="dashboard.exportCalendar()" class="btn btn-sm btn-outline">📅 iCal</button>
+                    </div>
+                </div>
+                <ul id="m-questions" style="padding-left: 1rem; font-size: 0.9rem;"></ul>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="dashboard.generateMoreQuestions()" class="btn btn-sm btn-outline" style="border-color: #7c3aed; color: #7c3aed;">🔄 More Questions</button>
+                    <button onclick="dashboard.startVoiceInterview()" class="btn btn-sm" style="background: #7c3aed;">⚡ Start Voice</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                <select id="m-status" style="margin: 0; width: auto;"><option>Pending</option><option>Shortlisted</option><option>Rejected</option></select>
+                <button onclick="dashboard.updateStatus()" class="btn btn-sm">Update Status</button>
+                <button onclick="dashboard.draftEmail()" class="btn btn-sm btn-outline">✉️ Draft Email</button>
+                <button onclick="dashboard.linkedinSearch()" class="btn btn-sm" style="background: #0077b5;">in LinkedIn</button>
+                <button onclick="dashboard.exportReport()" class="btn btn-sm" style="background: #0ea5e9;">📥 Report</button>
+                <button onclick="dashboard.downloadResume()" class="btn btn-sm btn-outline">⬇️ Resume</button>
+            </div>
+
+            <!-- NOTES SECTION -->
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <label style="font-size: 0.85rem; font-weight: bold;">Private Notes:</label>
+                <textarea id="m-notes" rows="3" placeholder="Enter interviewer notes here..."></textarea>
+                <button onclick="dashboard.saveNotes()" class="btn btn-sm">Save Notes</button>
+            </div>
+
+            <!-- TRAINING DATA SECTION -->
+            <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
+                <h4 style="margin-top:0; color: #0369a1;">🤖 ML Training Feedback</h4>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="number" id="m-train-score" placeholder="Correct (0-100)" style="margin:0; max-width: 150px;">
+                    <button onclick="dashboard.saveTrainingData()" class="btn btn-sm" style="margin:0; background: #0284c7;">💾 Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MANAGE JOBS MODAL -->
+    <div id="modal-jobs" class="modal">
+        <div class="modal-box">
+            <span class="close-modal" onclick="this.closest('.modal').classList.remove('open')">&times;</span>
+            <h2>Manage Job Postings</h2>
+            <ul id="jobs-list" style="padding:0; list-style:none;"></ul>
+        </div>
+    </div>
+
+    <!-- === CHATBOT === -->
+    <div class="chat-btn" onclick="document.getElementById('chat-window').style.display='flex'">💬</div>
+    <div id="chat-window" class="chat-window">
+        <div style="padding: 1rem; background: var(--primary); color: white; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <span>VN Infra AI</span>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <span id="btn-mute" style="cursor: pointer; font-size: 1.2rem;" onclick="ai.toggleMute()" title="Toggle Mute">🔊</span>
+                <span style="cursor: pointer;" onclick="document.getElementById('chat-window').style.display='none'">&times;</span>
+            </div>
+        </div>
+        <div id="chat-body" class="chat-body"><div class="msg bot">Hello! I'm your GenAI assistant. Ask me anything.</div></div>
+        <form onsubmit="ai.chat(event)" style="padding: 0.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; align-items: center;">
+            <input id="chat-in" placeholder="Type..." style="margin: 0; border: none; flex: 1;">
+            <button type="button" onclick="ai.toggleMic()" id="mic-btn" class="btn btn-sm" style="width: 40px; background: #64748b; padding: 0.5rem;" title="Start Mic">🎤</button>
+            <button class="btn btn-sm" style="width: auto; margin: 0;">Send</button>
+        </form>
+    </div>
+
+    <!-- === LOGIC === -->
+    <script>
+        const LocalDB = {
+            get: (col) => JSON.parse(localStorage.getItem('vn_'+col) || '[]'),
+            save: (col, data) => localStorage.setItem('vn_'+col, JSON.stringify(data)),
+            add: (col, doc) => {
+                const list = LocalDB.get(col);
+                if(!doc.id) doc.id = 'doc_' + Date.now();
+                list.push(doc);
+                LocalDB.save(col, list);
+                return doc;
+            },
+            update: (col, id, updates) => {
+                const list = LocalDB.get(col);
+                const idx = list.findIndex(d => d.id === id);
+                if(idx !== -1) { list[idx] = {...list[idx], ...updates}; LocalDB.save(col, list); }
+            },
+            delete: (col, id) => {
+                const list = LocalDB.get(col).filter(d => d.id !== id);
+                LocalDB.save(col, list);
+            }
+        };
+
+        // IndexedDB for File Storage
+        const FileDB = {
+            dbName: 'VN_Infra_Files', storeName: 'resumes',
+            open: () => new Promise((res, rej) => {
+                const req = indexedDB.open(FileDB.dbName, 1);
+                req.onupgradeneeded = e => e.target.result.createObjectStore(FileDB.storeName);
+                req.onsuccess = e => res(e.target.result);
+                req.onerror = e => rej(e);
+            }),
+            saveFile: async (id, file) => {
+                const db = await FileDB.open();
+                return new Promise((res, rej) => {
+                    const tx = db.transaction(FileDB.storeName, 'readwrite');
+                    tx.objectStore(FileDB.storeName).put(file, id);
+                    tx.oncomplete = () => res(); tx.onerror = e => rej(e);
+                });
+            },
+            getFile: async (id) => {
+                const db = await FileDB.open();
+                return new Promise((res, rej) => {
+                    const req = db.transaction(FileDB.storeName, 'readonly').objectStore(FileDB.storeName).get(id);
+                    req.onsuccess = () => res(req.result); req.onerror = e => rej(e);
+                });
+            },
+            deleteFile: async (id) => {
+                const db = await FileDB.open();
+                db.transaction(FileDB.storeName, 'readwrite').objectStore(FileDB.storeName).delete(id);
+            }
+        };
+
+        function showLoading(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
+
+        const app = {
+            nav: (view) => {
+                document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`view-${view}`).classList.remove('hidden');
+                localStorage.setItem('current_view', view);
+                if(view === 'dashboard') dashboard.load();
+                if(view === 'dashboard-candidate') candDash.load();
+                if(view === 'apply') apply.loadJobs();
+            },
+
+            toggleDarkMode: () => {
+                document.body.classList.toggle('dark');
+                localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+            }
+        };
+
+        const auth = {
+            currentUserEmail: null,
+
+            loginRecruiter: (e) => {
+                e.preventDefault();
+                if(document.getElementById('login-pass-rec').value === 'deva') {
+                    auth.currentUserEmail = 'recruiter'; // Special flag
+                    document.getElementById('user-badge').textContent = 'Recruiter';
+                    document.getElementById('user-badge').style.background = '#dbeafe';
+                    app.nav('dashboard');
+                } else {
+                    alert("Incorrect Code");
+                }
+            },
+
+            loginCandidate: (e) => {
+                e.preventDefault();
+                const email = document.getElementById('cand-email').value.trim();
+                if(email) {
+                    auth.currentUserEmail = email;
+                    document.getElementById('user-badge').textContent = `Candidate: ${email}`;
+                    document.getElementById('user-badge').style.background = '#dcfce7';
+                    app.nav('dashboard-candidate');
+                }
+            },
+
+            logout: () => {
+                auth.currentUserEmail = null;
+                document.getElementById('user-badge').textContent = 'Guest';
+                document.getElementById('user-badge').style.background = '#e2e8f0';
+                app.nav('home');
+            },
+            
+            backFromApply: () => {
+                if(auth.currentUserEmail && auth.currentUserEmail !== 'recruiter') {
+                    app.nav('dashboard-candidate');
+                } else {
+                    app.nav('home');
+                }
+            },
+
+            backToDashboard: () => {
+                if(auth.currentUserEmail === 'recruiter') app.nav('dashboard');
+                else if(auth.currentUserEmail) app.nav('dashboard-candidate');
+                else app.nav('home');
+            }
+        };
+
+        // --- CANDIDATE DASHBOARD LOGIC ---
+        const candDash = {
+            load: () => {
+                document.getElementById('cand-welcome').innerText = `Logged in as: ${auth.currentUserEmail}`;
+                const myApps = LocalDB.get('applications').filter(a => a.email === auth.currentUserEmail);
+                const tbody = document.getElementById('cand-app-list');
+                tbody.innerHTML = '';
+                if(myApps.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No applications yet.</td></tr>';
+                    return;
+                }
+                myApps.forEach(a => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${a.jobTitle}</td>
+                            <td>${new Date(a.timestamp).toLocaleDateString()}</td>
+                            <td style="font-weight:bold; color:var(--primary);">${a.score}%</td>
+                            <td><span class="status-badge st-${a.status}">${a.status}</span></td>
+                            <td class="text-sm">${a.notes || '-'}</td>
+                        </tr>
+                    `;
+                });
+            }
+        };
+
+        const ai = {
+            localEndpoint: "http://127.0.0.1:5000/analyze",
+            feedbackEndpoint: "http://127.0.0.1:5000/feedback",
+            recognition: null,
+            isMuted: false,
+            utterance: null, 
+
+            generate: async (prompt) => {
+                const provider = document.getElementById('ai-provider').value;
+                const key = document.getElementById('custom-api-key').value.trim();
+                const GROQ_DEFAULT = "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";
+
+                if (provider === 'groq') {
+                    const finalKey = key || GROQ_DEFAULT;
+                    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${finalKey}` },
+                        body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: prompt }] })
+                    });
+                    const json = await response.json();
+                    return json.choices[0].message.content;
+                }
+                if (provider === 'gemini' && key) {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+                    const response = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+                    const json = await response.json();
+                    return json.candidates[0].content.parts[0].text;
+                }
+                throw new Error("Check API Settings");
+            },
+
+            checkResume: async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('chk-btn');
+                const file = document.getElementById('chk-file').files[0];
+                const jd = document.getElementById('chk-jd').value;
+                const resDiv = document.getElementById('chk-result');
+
+                if(!file || !jd) return alert("Missing File or JD");
+                btn.disabled = true; btn.textContent = "Processing...";
+                showLoading(true);
+
+                try {
+                    const formData = new FormData();
+                    formData.append('resume', file);
+                    formData.append('jd', jd);
+                    const response = await fetch(ai.localEndpoint, { method: 'POST', body: formData });
+                    const json = await response.json();
+                    showLoading(false);
+                    resDiv.style.display = 'block';
+                    resDiv.innerHTML = `<h3>Score: ${json.matchScore}%</h3><p>${json.status}</p>`;
+                } catch (err) { showLoading(false); alert("Error: " + err.message); } 
+                finally { btn.disabled = false; btn.textContent = "Run Analysis"; }
+            },
+
+            saveSettings: () => {
+                localStorage.setItem('custom_api_key', document.getElementById('custom-api-key').value);
+                localStorage.setItem('ai_provider', document.getElementById('ai-provider').value);
+                alert("Saved!");
+            },
+
+            chat: async (e) => {
+                if(e) e.preventDefault();
+                const inp = document.getElementById('chat-in');
+                const txt = inp.value.trim();
+                if(!txt) return;
+                
+                const body = document.getElementById('chat-body');
+                body.innerHTML += `<div class="msg user">${txt}</div>`;
+                inp.value = '';
+                
+                try {
+                    const reply = await ai.generate(`Short helpful answer: ${txt}`);
+                    body.innerHTML += `<div class="msg bot">${reply}</div>`;
+                    ai.speak(reply);
+                } catch(err) { body.innerHTML += `<div class="msg bot" style="color:red;">Error.</div>`; }
+                body.scrollTop = body.scrollHeight;
+            },
+
+            speak: (text) => {
+                if (ai.isMuted || !window.speechSynthesis) return;
+                window.speechSynthesis.cancel();
+                setTimeout(() => {
+                    const u = new SpeechSynthesisUtterance(text);
+                    u.lang = 'en-US';
+                    ai.utterance = u;
+                    u.onend = () => { ai.utterance = null; };
+                    window.speechSynthesis.speak(u);
+                }, 10);
+            },
+
+            toggleMute: () => {
+                ai.isMuted = !ai.isMuted;
+                document.getElementById('btn-mute').textContent = ai.isMuted ? '🔇' : '🔊';
+                if(ai.isMuted) window.speechSynthesis.cancel();
+            },
+
+            toggleMic: () => {
+                if (!window.webkitSpeechRecognition) return alert("Use Chrome");
+                
+                if (!ai.recognition) {
+                    ai.recognition = new webkitSpeechRecognition();
+                    ai.recognition.continuous = false; 
+                    ai.recognition.interimResults = true; 
+                    ai.recognition.lang = 'en-US';
+
+                    ai.recognition.onstart = () => {
+                        document.getElementById('mic-btn').style.backgroundColor = '#ef4444'; 
+                        document.getElementById('chat-in').placeholder = "Listening...";
+                    };
+
+                    ai.recognition.onend = () => {
+                        document.getElementById('mic-btn').style.backgroundColor = '#64748b'; 
+                        document.getElementById('chat-in').placeholder = "Type...";
+                    };
+
+                    ai.recognition.onresult = (e) => {
+                        let final = '';
+                        let interim = '';
+                        for (let i = e.resultIndex; i < e.results.length; ++i) {
+                            if (e.results[i].isFinal) {
+                                final += e.results[i][0].transcript;
+                            } else {
+                                interim += e.results[i][0].transcript;
+                            }
+                        }
+                        
+                        if (final) {
+                            document.getElementById('chat-in').value = final;
+                            ai.chat(); 
+                        } else {
+                            document.getElementById('chat-in').value = interim;
+                        }
+                    };
+                }
+                
+                try { ai.recognition.start(); } catch(e) { ai.recognition.stop(); }
+            }
+        };
+
+        const dashboard = {
+            currentAppId: null,
+            currentAppData: null,
+            viewMode: 'table',
+            chartInstance: null,
+            skillGapInstance: null,
+
+            toggleViewMode: () => { dashboard.viewMode = dashboard.viewMode === 'table' ? 'board' : 'table'; dashboard.load(); },
+            toggleAnalytics: () => { document.getElementById('analytics-container').classList.toggle('hidden'); dashboard.renderChart(); },
+            
+            toggleInfo: () => {
+                const info = document.getElementById('info-cards');
+                if(info) {
+                    info.classList.toggle('hidden');
+                    if (!info.classList.contains('hidden')) info.scrollIntoView({ behavior: 'smooth' });
+                }
+            },
+
+            // --- INTERVIEW DASHBOARD ---
+            loadInterviews: () => {
+                const apps = LocalDB.get('applications').filter(a => a.interviewDate);
+                const list = document.getElementById('interview-list');
+                const container = document.getElementById('view-interviews');
+                const appView = document.getElementById('view-apps');
+                
+                if(container.classList.contains('hidden')) {
+                    container.classList.remove('hidden');
+                    appView.classList.add('hidden');
+                    
+                    list.innerHTML = apps.length ? '' : '<p>No interviews scheduled.</p>';
+                    apps.sort((a,b) => new Date(a.interviewDate) - new Date(b.interviewDate)).forEach(a => {
+                        const dateObj = new Date(a.interviewDate);
+                        list.innerHTML += `
+                        <div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <strong>${a.name}</strong> (${a.jobTitle})
+                                <div class="text-sm" style="color:var(--primary);">
+                                    📅 ${dateObj.toLocaleDateString()} 🕒 ${dateObj.toLocaleTimeString()}
+                                </div>
+                            </div>
+                            <button onclick="dashboard.openModal('${encodeURIComponent(JSON.stringify(a))}')" class="btn btn-sm">View</button>
+                        </div>`;
+                    });
+                } else {
+                    container.classList.add('hidden');
+                    appView.classList.remove('hidden');
+                }
+            },
+
+            renderChart: () => {
+                const apps = LocalDB.get('applications');
+                
+                const ctx = document.getElementById('analyticsChart').getContext('2d');
+                if (dashboard.chartInstance) dashboard.chartInstance.destroy();
+                dashboard.chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Pending', 'Shortlisted', 'Rejected'],
+                        datasets: [{ data: ['Pending', 'Shortlisted', 'Rejected'].map(s => apps.filter(a => a.status === s).length), backgroundColor: ['#f59e0b', '#10b981', '#ef4444'], borderWidth: 0 }]
+                    }
+                });
+
+                const allMissing = apps.flatMap(a => a.missing || []);
+                const skillCounts = {};
+                allMissing.forEach(s => skillCounts[s] = (skillCounts[s] || 0) + 1);
+                const sortedSkills = Object.entries(skillCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+                
+                const ctx2 = document.getElementById('skillGapChart').getContext('2d');
+                if (dashboard.skillGapInstance) dashboard.skillGapInstance.destroy();
+                dashboard.skillGapInstance = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: sortedSkills.map(s => s[0]),
+                        datasets: [{ label: 'Missing Count', data: sortedSkills.map(s => s[1]), backgroundColor: '#3b82f6' }]
+                    },
+                    options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
+            },
+
+            load: () => {
+                const search = document.getElementById('search-input').value.toLowerCase();
+                let apps = LocalDB.get('applications').sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                if(search) apps = apps.filter(d => d.name.toLowerCase().includes(search));
+
+                if (dashboard.viewMode === 'table') {
+                    document.getElementById('view-table').classList.remove('hidden');
+                    document.getElementById('view-board').classList.add('hidden');
+                    const tbody = document.getElementById('table-body');
+                    tbody.innerHTML = '';
+                    apps.forEach(d => {
+                        tbody.innerHTML += `<tr><td onclick="dashboard.openModal('${encodeURIComponent(JSON.stringify(d))}')" style="cursor:pointer;font-weight:bold;color:var(--primary);">${d.name}</td><td>${d.jobTitle}</td><td>${d.score}%</td><td><span class="status-badge st-${d.status}">${d.status}</span></td><td><button class="btn btn-sm btn-danger" onclick="dashboard.del('${d.id}')">X</button></td></tr>`;
+                    });
+                } else {
+                    document.getElementById('view-table').classList.add('hidden');
+                    document.getElementById('view-board').classList.remove('hidden');
+                    ['Pending', 'Shortlisted', 'Rejected'].forEach(s => {
+                        const list = apps.filter(a => a.status === s);
+                        const el = document.getElementById('board-'+s.toLowerCase());
+                        el.innerHTML = `<div class="kanban-header">${s} ${list.length}</div>`;
+                        list.forEach(d => {
+                            el.innerHTML += `<div class="kanban-card" draggable="true" ondragstart="dashboard.drag(event, '${d.id}')" onclick="dashboard.openModal('${encodeURIComponent(JSON.stringify(d))}')"><h4>${d.name}</h4><div>${d.score}%</div></div>`;
+                        });
+                    });
+                }
+                
+                document.getElementById('stat-total').innerText = apps.length;
+                document.getElementById('stat-short').innerText = apps.filter(a => a.status === 'Shortlisted').length;
+                document.getElementById('stat-avg').innerText = (apps.length ? Math.round(apps.reduce((a, c) => a + c.score, 0) / apps.length) : 0) + '%';
+            },
+
+            openModal: (encoded) => {
+                const d = JSON.parse(decodeURIComponent(encoded));
+                dashboard.currentAppId = d.id;
+                dashboard.currentAppData = d;
+                document.getElementById('m-name').innerText = `${d.name} (${d.score}%)`;
+                document.getElementById('m-match').innerHTML = (d.matching || []).map(x => `<li>${x}</li>`).join('');
+                document.getElementById('m-miss').innerHTML = (d.missing || []).map(x => `<li>${x}</li>`).join('');
+                document.getElementById('m-questions').innerHTML = (d.questions || []).map(x => `<li>${x}</li>`).join('');
+                document.getElementById('m-status').value = d.status;
+                document.getElementById('m-train-score').value = d.score;
+                document.getElementById('m-notes').value = d.notes || '';
+                document.getElementById('m-interview-date').value = d.interviewDate || '';
+                
+                const modal = document.getElementById('modal-detail');
+                modal.classList.remove('hidden'); 
+                modal.classList.add('open');
+            },
+
+            startVoiceInterview: () => {
+                const d = dashboard.currentAppData;
+                if(!d.questions || !d.questions.length) return alert("No questions.");
+                document.getElementById('modal-detail').classList.remove('open');
+                document.getElementById('chat-window').style.display = 'flex';
+                const q = d.questions[0];
+                document.getElementById('chat-body').innerHTML += `<div class="msg bot">Interview: ${q}</div>`;
+                ai.speak(q);
+            },
+
+            updateStatus: () => {
+                LocalDB.update('applications', dashboard.currentAppId, { status: document.getElementById('m-status').value });
+                document.getElementById('modal-detail').classList.remove('open');
+                dashboard.load();
+            },
+
+            scheduleInterview: () => {
+                const date = document.getElementById('m-interview-date').value;
+                if(!date) return alert("Please select a date.");
+                LocalDB.update('applications', dashboard.currentAppId, { interviewDate: date });
+                alert("Interview Scheduled!");
+            },
+            
+            exportCalendar: () => {
+                const d = dashboard.currentAppData;
+                if(!d.interviewDate) return alert("No interview date set.");
+                const date = new Date(d.interviewDate);
+                const end = new Date(date.getTime() + 60*60*1000); 
+                const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:Interview with ${d.name}
+DTSTART:${date.toISOString().replace(/-|:|\.\d+/g, '')}
+DTEND:${end.toISOString().replace(/-|:|\.\d+/g, '')}
+DESCRIPTION:Role: ${d.jobTitle}. Score: ${d.score}%
+END:VEVENT
+END:VCALENDAR`;
+                const blob = new Blob([ics], { type: 'text/calendar' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'interview.ics';
+                a.click();
+            },
+
+            linkedinSearch: () => {
+                const d = dashboard.currentAppData;
+                const query = encodeURIComponent(`${d.name} ${d.jobTitle}`);
+                window.open(`https://www.linkedin.com/search/results/all/?keywords=${query}`, '_blank');
+            },
+
+            saveNotes: () => {
+                const notes = document.getElementById('m-notes').value;
+                LocalDB.update('applications', dashboard.currentAppId, { notes: notes });
+                alert("Notes Saved!");
+            },
+
+            generateMoreQuestions: async () => {
+                const btn = document.querySelector('button[onclick="dashboard.generateMoreQuestions()"]');
+                btn.innerText = "Generating..."; btn.disabled = true;
+                try {
+                    const d = dashboard.currentAppData;
+                    const prompt = `Generate 3 advanced interview questions for a ${d.jobTitle} role based on these missing skills: ${(d.missing||[]).join(', ')}.`;
+                    const text = await ai.generate(prompt);
+                    const newQs = text.split('\n').filter(line => line.includes('?'));
+                    const combined = [...(d.questions || []), ...newQs];
+                    LocalDB.update('applications', dashboard.currentAppId, { questions: combined });
+                    dashboard.currentAppData.questions = combined; 
+                    document.getElementById('m-questions').innerHTML = combined.map(x => `<li>${x}</li>`).join('');
+                } catch(e) { alert(e.message); }
+                finally { btn.innerText = "🔄 More Questions"; btn.disabled = false; }
+            },
+
+            downloadResume: async () => {
+                try {
+                    const fileBlob = await FileDB.getFile(dashboard.currentAppId);
+                    if (!fileBlob) return alert("Resume file not found (might be from older version).");
+                    const url = URL.createObjectURL(fileBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Resume_${dashboard.currentAppData.name.replace(/ /g, '_')}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (e) { alert("Error downloading: " + e.message); }
+            },
+
+            saveTrainingData: async () => {
+                const score = document.getElementById('m-train-score').value;
+                try {
+                    const file = await FileDB.getFile(dashboard.currentAppId);
+                    const jd = dashboard.currentAppData.jdText;
+                    const fd = new FormData();
+                    fd.append('resume', file); fd.append('jd', jd); fd.append('score', score);
+                    await fetch(ai.feedbackEndpoint, { method: 'POST', body: fd });
+                    alert("Saved!");
+                } catch(e) { alert("Error saving"); }
+            },
+
+            addJob: (e) => {
+                e.preventDefault();
+                LocalDB.add('jobs', { title: document.getElementById('job-title').value, description: document.getElementById('job-desc').value });
+                alert("Posted!"); e.target.reset();
+            },
+
+            generateJD: async () => {
+                const t = document.getElementById('job-title').value;
+                if(!t) return;
+                try {
+                    const txt = await ai.generate(`Job Description for ${t}, 2 sentences.`);
+                    document.getElementById('job-desc').value = txt;
+                } catch(e) { alert(e.message); }
+            },
+
+            draftEmail: async () => {
+                const d = dashboard.currentAppData;
+                try {
+                    const txt = await ai.generate(`Email to ${d.name}, status: ${d.status}, role: ${d.jobTitle}`);
+                    alert(txt);
+                } catch(e) { alert(e.message); }
+            },
+
+            exportReport: () => {
+                if (!window.jspdf) return alert("PDF Lib Loading...");
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const d = dashboard.currentAppData;
+                doc.setFontSize(16);
+                doc.text(`Candidate Report: ${d.name}`, 10, 20);
+                doc.setFontSize(12);
+                doc.text(`Role: ${d.jobTitle}`, 10, 30);
+                doc.text(`ML Score: ${d.score}%`, 10, 40);
+                doc.text(`Status: ${d.status}`, 10, 50);
+                
+                doc.text("Interviewer Notes:", 10, 70);
+                const notes = d.notes || "No notes added.";
+                const splitNotes = doc.splitTextToSize(notes, 180);
+                doc.text(splitNotes, 10, 80);
+
+                doc.save('Report.pdf');
+            },
+
+            del: async (id) => {
+                if(confirm("Delete?")) {
+                    LocalDB.delete('applications', id);
+                    try { await FileDB.deleteFile(id); } catch(e) {}
+                    dashboard.load();
+                }
+            },
+
+            exportCSV: () => {
+                const apps = LocalDB.get('applications');
+                const csv = "Name,Score,Status\n" + apps.map(a => `${a.name},${a.score},${a.status}`).join('\n');
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+                a.download = 'data.csv';
+                a.click();
+            },
+            
+            exportData: () => {
+                const data = {
+                    applications: LocalDB.get('applications'),
+                    jobs: LocalDB.get('jobs')
+                };
+                const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'backup.json';
+                a.click();
+            },
+            
+            importData: (input) => {
+                const file = input.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        LocalDB.save('applications', data.applications);
+                        LocalDB.save('jobs', data.jobs);
+                        alert("Data Imported! Refreshing...");
+                        location.reload();
+                    } catch(err) { alert("Invalid JSON"); }
+                };
+                reader.readAsText(file);
+            },
+
+            openManageJobs: () => {
+                const list = document.getElementById('jobs-list');
+                list.innerHTML = LocalDB.get('jobs').map(j => `<li>${j.title} <button onclick="dashboard.deleteJob('${j.id}')" class="btn btn-sm btn-danger">X</button></li>`).join('');
+                document.getElementById('modal-jobs').classList.add('open');
+            },
+
+            deleteJob: (id) => {
+                if(confirm("Delete Job?")) { LocalDB.delete('jobs', id); dashboard.openManageJobs(); }
+            },
+
+            // Drag & Drop Logic
+            allowDrop: (ev) => ev.preventDefault(),
+            drag: (ev, id) => ev.dataTransfer.setData("text", id),
+            drop: (ev, status) => {
+                ev.preventDefault();
+                const id = ev.dataTransfer.getData("text");
+                LocalDB.update('applications', id, { status: status });
+                dashboard.load();
+            }
+        };
+
+        const apply = {
+            loadJobs: () => {
+                const sel = document.getElementById('app-job');
+                const jobs = LocalDB.get('jobs');
+                
+                // Always clear first
+                sel.innerHTML = '<option disabled selected>-- Select Position --</option>';
+                
+                // FIX: Ensure list is never empty
+                if(jobs.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.value = 'dummy'; 
+                    opt.textContent = 'Python Developer (Demo)';
+                    opt.dataset.desc = "Python flask machine learning sql react";
+                    sel.appendChild(opt);
+                }
+
+                jobs.forEach(j => {
+                    const opt = document.createElement('option');
+                    opt.value = j.id; opt.textContent = j.title; opt.dataset.desc = j.description;
+                    sel.appendChild(opt);
+                });
+            },
+
+            submit: async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('app-btn');
+                btn.disabled = true; btn.textContent = "Processing...";
+                showLoading(true);
+
+                try {
+                    const file = document.getElementById('app-file').files[0];
+                    const jobSel = document.getElementById('app-job');
+                    const jobDesc = jobSel.options[jobSel.selectedIndex].dataset.desc;
+                    
+                    const fd = new FormData();
+                    fd.append('resume', file); fd.append('jd', jobDesc);
+                    const res = await fetch(ai.localEndpoint, { method: 'POST', body: fd });
+                    const json = await res.json();
+
+                    const id = 'app_' + Date.now();
+                    
+                    let appEmail = document.getElementById('app-email').value;
+                    if(auth.currentUserEmail && auth.currentUserEmail !== 'recruiter') {
+                        appEmail = auth.currentUserEmail;
+                    }
+
+                    await FileDB.saveFile(id, file);
+                    LocalDB.add('applications', {
+                        id, name: document.getElementById('app-name').value,
+                        email: appEmail,
+                        jobTitle: jobSel.options[jobSel.selectedIndex].text,
+                        jdText: jobDesc,
+                        score: json.matchScore,
+                        status: json.status,
+                        matching: json.matching,
+                        missing: json.missing,
+                        questions: json.questions,
+                        timestamp: new Date()
+                    });
+                    alert("Applied! Score: " + json.matchScore);
+                    app.nav('home');
+                } catch(e) { alert("Error: " + e.message); }
+                finally { showLoading(false); btn.disabled = false; }
+            }
+        };
+
+        // Initialize
+        const k = localStorage.getItem('custom_api_key');
+        if(k) document.getElementById('custom-api-key').value = k;
+        
+        // Load theme
+        if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+        
+        // Pre-load voices
+        window.speechSynthesis.getVoices();
+        
+        // Restore last view logic
+        const lastView = localStorage.getItem('current_view') || 'home';
+        app.nav(lastView);
+    </script>
+</body>
+</html>
