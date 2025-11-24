@@ -1,8 +1,9 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 flask
 flask-cors
+torch
 sentence-transformers
 pdfplumber
-torch
 scikit-learn
 datasets
 accelerate
