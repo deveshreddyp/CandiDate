@@ -64,11 +64,6 @@
         .msg.bot { background: var(--bg); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
         .mic-active { background: #ef4444 !important; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-        
-        /* Drag and Drop */
-        .kanban-card.dragging { opacity: 0.5; border: 2px dashed var(--primary); }
-        .kanban-col.drag-over { background: #e2e8f0; }
-
         @media(max-width: 768px) { .grid, .kanban-board { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -126,6 +121,7 @@
                     <li><strong>Tanusree Reddy</strong> - HR (mre23ainds@cmrit.ac.in)</li>
                 </ul>
             </div>
+            <button onclick="document.getElementById('modal-info').classList.remove('open')" class="btn btn-outline" style="margin-top: 1rem;">Close</button>
         </div>
     </div>
 
@@ -137,6 +133,7 @@
             <button onclick="app.nav('login-recruiter')" class="btn btn-outline">Recruiter Login</button>
             <button onclick="app.nav('login-candidate')" class="btn btn-outline" style="background:#f0fdf4; border-color:#10b981; color:#047857;">Candidate Login</button>
             <button onclick="app.nav('candidate')" class="btn">Resume Check (Guest)</button>
+            <p style="margin-top: 1rem; font-size: 0.9rem;">New Candidate? <a href="#" onclick="app.nav('register')" style="color: var(--primary);">Register Here</a></p>
             <button onclick="document.getElementById('modal-info').classList.add('open')" class="btn btn-sm" style="margin-top: 1rem; background: #64748b;">ℹ️ About & Team</button>
         </div>
     </section>
@@ -149,7 +146,7 @@
                 <input type="password" id="login-pass-rec" placeholder="Code..." required>
                 <button class="btn">Login</button>
             </form>
-            <button onclick="app.nav('home')" class="btn btn-outline" style="margin-top: 1rem;">Cancel</button>
+            <button onclick="app.nav('home')" class="btn btn-outline" style="margin-top: 1rem;">Back</button>
         </div>
     </section>
 
@@ -160,7 +157,22 @@
             <p class="text-sm">Login to track your applications</p>
             <form onsubmit="auth.loginCandidate(event)">
                 <input type="email" id="cand-email" placeholder="Enter your email..." required>
+                <input type="password" id="cand-pass" placeholder="Password..." required>
                 <button class="btn" style="background: var(--success);">Access Dashboard</button>
+            </form>
+            <button onclick="app.nav('home')" class="btn btn-outline" style="margin-top: 1rem;">Cancel</button>
+        </div>
+    </section>
+
+    <!-- NEW: CANDIDATE REGISTER -->
+    <section id="view-register" class="container center-box hidden">
+        <div class="card card-top" style="border-top-color: var(--accent);">
+            <h2>Create Account</h2>
+            <form onsubmit="auth.register(event)">
+                <input type="text" id="reg-name" placeholder="Full Name" required>
+                <input type="email" id="reg-email" placeholder="Email" required>
+                <input type="password" id="reg-pass" placeholder="Create Password" required>
+                <button class="btn" style="background: var(--accent);">Sign Up</button>
             </form>
             <button onclick="app.nav('home')" class="btn btn-outline" style="margin-top: 1rem;">Cancel</button>
         </div>
@@ -178,7 +190,7 @@
                     <button class="btn btn-outline" onclick="dashboard.loadInterviews()">📅 Interviews</button>
                     <button class="btn btn-outline" onclick="dashboard.exportCSV()">📥 Export CSV</button>
                     <button class="btn btn-outline" onclick="dashboard.openManageJobs()">💼 Jobs</button>
-                    <button class="btn btn-danger" onclick="app.nav('home')">Logout</button>
+                    <button class="btn btn-danger" onclick="auth.logout()">Logout</button>
                 </div>
             </aside>
             <main>
@@ -236,7 +248,7 @@
         <div class="card card-top" style="border-top-color: var(--success);">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h2>My Applications</h2>
-                <button class="btn btn-danger btn-sm" onclick="app.nav('home')">Logout</button>
+                <button class="btn btn-danger btn-sm" onclick="auth.logout()">Logout</button>
             </div>
             <p id="cand-welcome" class="text-sm" style="margin-bottom: 1rem;">Welcome!</p>
             
@@ -252,10 +264,9 @@
         </div>
     </section>
 
-    <!-- GUEST RESUME CHECK (Also used by Candidates) -->
+    <!-- GUEST/CANDIDATE RESUME CHECK -->
     <section id="view-candidate" class="container hidden">
         <div class="card">
-            <!-- UPDATED BACK BUTTON -->
             <button onclick="auth.backToDashboard()" class="btn btn-sm btn-outline" style="margin-bottom: 1rem;">← Back</button>
             <h2>ML Resume Match</h2>
             <form onsubmit="ai.checkResume(event)">
@@ -288,7 +299,7 @@
         </div>
     </section>
 
-    <!-- MODAL DETAIL (RECRUITER) -->
+    <!-- MODAL DETAIL -->
     <div id="modal-detail" class="modal">
         <div class="modal-box">
             <span class="close-modal" onclick="this.closest('.modal').classList.remove('open')">&times;</span>
@@ -311,7 +322,7 @@
                 <ul id="m-questions" style="padding-left: 1rem; font-size: 0.9rem;"></ul>
                 <div style="display: flex; gap: 0.5rem;">
                     <button onclick="dashboard.generateMoreQuestions()" class="btn btn-sm btn-outline" style="border-color: #7c3aed; color: #7c3aed;">🔄 More Questions</button>
-                    <button onclick="dashboard.startVoiceInterview()" class="btn btn-sm" style="background: #7c3aed;">⚡ Start Voice</button>
+                    <button onclick="dashboard.startVoiceInterview()" class="btn btn-sm" style="background: #7c3aed;">⚡ Start Voice Interview</button>
                 </div>
             </div>
 
@@ -335,7 +346,7 @@
             <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
                 <h4 style="margin-top:0; color: #0369a1;">🤖 ML Training Feedback</h4>
                 <div style="display: flex; gap: 0.5rem;">
-                    <input type="number" id="m-train-score" placeholder="Correct (0-100)" style="margin:0; max-width: 150px;">
+                    <input type="number" id="m-train-score" placeholder="Correct Score (0-100)" style="margin:0; max-width: 150px;">
                     <button onclick="dashboard.saveTrainingData()" class="btn btn-sm" style="margin:0; background: #0284c7;">💾 Save</button>
                 </div>
             </div>
@@ -443,10 +454,24 @@
         const auth = {
             currentUserEmail: null,
 
+            register: (e) => {
+                e.preventDefault();
+                const name = document.getElementById('reg-name').value;
+                const email = document.getElementById('reg-email').value;
+                const pass = document.getElementById('reg-pass').value;
+                
+                const users = LocalDB.get('users');
+                if(users.find(u => u.email === email)) return alert("Email already registered!");
+                
+                LocalDB.add('users', { name, email, pass });
+                alert("Registration Successful! Please Login.");
+                app.nav('login-candidate');
+            },
+
             loginRecruiter: (e) => {
                 e.preventDefault();
                 if(document.getElementById('login-pass-rec').value === 'deva') {
-                    auth.currentUserEmail = 'recruiter'; // Special flag
+                    auth.currentUserEmail = 'recruiter'; 
                     document.getElementById('user-badge').textContent = 'Recruiter';
                     document.getElementById('user-badge').style.background = '#dbeafe';
                     app.nav('dashboard');
@@ -458,12 +483,15 @@
             loginCandidate: (e) => {
                 e.preventDefault();
                 const email = document.getElementById('cand-email').value.trim();
-                if(email) {
+                const pass = document.getElementById('cand-pass').value.trim();
+                
+                const user = LocalDB.get('users').find(u => u.email === email && u.pass === pass);
+                if(user) {
                     auth.currentUserEmail = email;
-                    document.getElementById('user-badge').textContent = `Candidate: ${email}`;
+                    document.getElementById('user-badge').textContent = `Candidate: ${user.name}`;
                     document.getElementById('user-badge').style.background = '#dcfce7';
                     app.nav('dashboard-candidate');
-                }
+                } else alert("Invalid Credentials");
             },
 
             logout: () => {
@@ -514,8 +542,8 @@
         };
 
         const ai = {
-            localEndpoint: "http://127.0.0.1:5000/analyze",
-            feedbackEndpoint: "http://127.0.0.1:5000/feedback",
+            localEndpoint: "/analyze", // Using relative for deployment compatibility
+            feedbackEndpoint: "/feedback",
             recognition: null,
             isMuted: false,
             utterance: null, 
@@ -670,7 +698,6 @@
                 }
             },
 
-            // --- INTERVIEW DASHBOARD ---
             loadInterviews: () => {
                 const apps = LocalDB.get('applications').filter(a => a.interviewDate);
                 const list = document.getElementById('interview-list');
@@ -692,7 +719,7 @@
                                     📅 ${dateObj.toLocaleDateString()} 🕒 ${dateObj.toLocaleTimeString()}
                                 </div>
                             </div>
-                            <button onclick="dashboard.openModal('${encodeURIComponent(JSON.stringify(a))}')" class="btn btn-sm">View</button>
+                            <button onclick="dashboard.openModal('${a.id}')" class="btn btn-sm">View</button>
                         </div>`;
                     });
                 } else {
@@ -742,7 +769,7 @@
                     const tbody = document.getElementById('table-body');
                     tbody.innerHTML = '';
                     apps.forEach(d => {
-                        tbody.innerHTML += `<tr><td onclick="dashboard.openModal('${encodeURIComponent(JSON.stringify(d))}')" style="cursor:pointer;font-weight:bold;color:var(--primary);">${d.name}</td><td>${d.jobTitle}</td><td>${d.score}%</td><td><span class="status-badge st-${d.status}">${d.status}</span></td><td><button class="btn btn-sm btn-danger" onclick="dashboard.del('${d.id}')">X</button></td></tr>`;
+                        tbody.innerHTML += `<tr><td onclick="dashboard.openModal('${d.id}')" style="cursor:pointer;font-weight:bold;color:var(--primary);">${d.name}</td><td>${d.jobTitle}</td><td>${d.score}%</td><td><span class="status-badge st-${d.status}">${d.status}</span></td><td><button class="btn btn-sm btn-danger" onclick="dashboard.del('${d.id}')">X</button></td></tr>`;
                     });
                 } else {
                     document.getElementById('view-table').classList.add('hidden');
@@ -752,7 +779,7 @@
                         const el = document.getElementById('board-'+s.toLowerCase());
                         el.innerHTML = `<div class="kanban-header">${s} ${list.length}</div>`;
                         list.forEach(d => {
-                            el.innerHTML += `<div class="kanban-card" draggable="true" ondragstart="dashboard.drag(event, '${d.id}')" onclick="dashboard.openModal('${encodeURIComponent(JSON.stringify(d))}')"><h4>${d.name}</h4><div>${d.score}%</div></div>`;
+                            el.innerHTML += `<div class="kanban-card" draggable="true" ondragstart="dashboard.drag(event, '${d.id}')" onclick="dashboard.openModal('${d.id}')"><h4>${d.name}</h4><div>${d.score}%</div></div>`;
                         });
                     });
                 }
@@ -762,8 +789,11 @@
                 document.getElementById('stat-avg').innerText = (apps.length ? Math.round(apps.reduce((a, c) => a + c.score, 0) / apps.length) : 0) + '%';
             },
 
-            openModal: (encoded) => {
-                const d = JSON.parse(decodeURIComponent(encoded));
+            openModal: (id) => {
+                // FIX: Look up by ID instead of parsing huge object
+                const d = LocalDB.get('applications').find(a => a.id === id);
+                if(!d) return alert("Application data not found!");
+                
                 dashboard.currentAppId = d.id;
                 dashboard.currentAppData = d;
                 document.getElementById('m-name').innerText = `${d.name} (${d.score}%)`;
