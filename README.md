@@ -1,0 +1,2 @@
+# CandiDate
+AI RESUME SCREENER
